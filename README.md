@@ -14,10 +14,13 @@ Create a copy of this script in your neural-style directory.
 
 `multiscale.sh content_file style_file`
 
-Inside the .sh file you will define your starting size, ending size and number of images you'd like to generate after the initial image, and the script will evenly size each output over your multiscale session. The script is a loop of commands iterating through each using the output image from the previous, and using a series of if then statements to determine next steps throughout the process. The script creates multiscale and project directories, keeping things neatly organized in their own folder. If you stop to change settings and run again the script will attempt to pick up where you left off. 
+Inside the .sh file you will define your starting size, ending size and the total number of images you'd like to generate. The script will evenly size each output over your multiscale session. The script is a loop of commands iterating through each using the output image from the previous, and using a series of if then statements to determine next steps throughout the process. The script creates multiscale and project directories, keeping things neatly organized in their own folder. If you stop to change settings and run again the script will attempt to pick up where you left off. 
 
 There are additional options for adding or subtracting on each step values for style scale, number of iterations, content weight and style weight. Style weight and content weight per step math are set to zero by default. I recommend shrinking style scale by some small amount over the course of the multiscale session. (This adds a sharpening effect, and enables slightly higher sizes - set to zero to disable)
  
+ 
+# What is multiscale-multiscale.sh for?
+ An additional version of the script is included that will make multiple image sets with different starting sizes. Just set the length of the loop and your startingPixelMarch var to define how many pixels you'd like the starting pixel size to grow for each phase. I made this mostly for comparison and testing purposes and figured I might as well share it with the main script. I recommend playing with multiscale.sh first.
 
 Here is a quick example series of what can be created with the script. These are the first and last image in a 15 part series. 
 
@@ -28,5 +31,11 @@ Here is a quick example series of what can be created with the script. These are
 
 Here is a complete series:
 <img src="http://i.imgur.com/dnlTaet.jpg" alt=""/>
+
+Here is an example of what can be created using the multiscale-multiscale.sh
+
+<img src="http://i.imgur.com/btslu3i.jpg" alt=""/>
+
+
 
 

@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
+#MULTISCALE-MULTISCALE? WHAT'S THAT? IT'S THE EXACT SAME SCRIPT WRAPPED WITH AN ADDITIONAL LOOP FOR ADDING TO STARTING SIZE
+#WHEN YOU RUN THIS VERSION OF THE SCRIPT, MULTIPLE IMAGE SETS WILL BE CREATED 
+#WITH DIFFERENT STARTING SIZES, BUT OTHERWISE EQUAL SETTINGS
+
 #THIS SCRIPT IS LOADED WITH COMMENTS, ECHO STATEMENTS AND VERBOSE VAR NAMES
 #HOPEFULLY THIS MAKES IT EASY TO READ AND DEBUG, FEEL FREE TO MAKE YOUR OWN EDITS
+
 ########################################################
-#CHANGE PATH TO THE ORIGINATING DIRECTORY
+#CHANGE TO DIRECTORY OF ORIGIN
 ########################################################
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 if [[ "$PWD" != "$DIR" ]]
@@ -15,19 +20,35 @@ neuralStyleFile="neural_style.lua"
 #SET THE SIZES BELOW TO SUIT YOUR COMPUTER AND PREFERENCE
 ########################################################
 #HOW SMALL SHOULD THE STARTING IMAGE BE? 
-startingSize="300"
+startingSize="150"
 
 #HOW LARGE SHOULD THE ENDING IMAGE BE?
-endingSize="2800"
+endingSize="1600"
 
 #HOW MANY IMAGES WOULD YOU LIKE TO GENERATE INCLUDING THE INITIAL IMAGE, HOW MANY STEPS SHOULD IT TAKE?
-numberOfSteps="5"
+numberOfSteps="4"
+
+#HOW MANY PIXELS WOULD YOU LIKE THE STARTING SIZE TO MARCH FORWARD FOR YOUR MULTI-MULTI SCALE LOOP?
+startingPixelMarch="100"
+
+########################################################
+main(){
+########################################################
+#THIS IS WHERE THE MULTI-LOOP FOR CHANGING INITIAL SIZE STARTS
+#PLACED ABOVE MOST VARS TO ENSURE THEY RESET ON EACH PHASE
+########################################################
+for r in `seq 1 16`;
+do
+  if  [ $r = 1 ]; then
+echo "Use original Initial settings besides new starting size"
+else
+startingSize=$((startingSize+$startingPixelMarch))
+fi
 
 #THIS IS THE SIMPLE FORUMULA TO DETERMINE PIXELS PER STEP
 stepExpanse=$((endingSize-$startingSize))
 numberOfStepsLessOne=$((numberOfSteps-1))
 addPixelsPerStep=$((stepExpanse / $numberOfStepsLessOne))
-
 
 #SWITCH TO ADAM AT LARGE SIZES TO SAVE MEMORY
 switchAdamSize="2600"
@@ -45,7 +66,7 @@ saveIter="0"
 learningRate="1"
 
 #STYLE SCALE SETTINGS
-styleScale=".8"
+styleScale=".7"
 styleWeight="9500"
 contentWeight="800"
 numIter="220"
@@ -54,41 +75,10 @@ numIter="220"
 minimumIters="30"
 
 ########################################################
-#MATH IS OPTIONAL YOU CAN ADD OR SUBTRACT THESE VALUES ON EVERY STEP, 
-#USE VALUES OF ZERO TO KEEP INITIAL CONSTANTS FROM ABOVE UNCHANGED
-########################################################
-#USE A + or - OPERATOR, SCRIPT IS EXPECTING EITHER - OR + IF YOU LEAVE IT OUT IT WILL BREAK LOGIC
-#YOU COULD CHOOSE TO ADD OR SUBTRACT INSTEAD LIKE mathStyleScale="+.015" OR mathStyleWeight="-50"
-
-mathStyleScale="-.011" 
-mathStyleWeight="+0"
-mathContentWeight="-0"
-mathIters="-60"
-
-########################################################
-#BACKEND SETTINGS
-########################################################
-backend="cudnn"
-gpu="0"
-
-#LEAVE THIS VAR BLANK TO SKIP MULTIGPU FUNCITONALITTY
-multiGpu=" "
-
-#UNCOMMENT THIS LINE TO ENABLE MULTIGPU FUNCTIONALITY
-#multiGpu="-gpu 1,0 -multigpu_strategy 8"
-
-#OPTIMIZER VALUES
-lbfgsNumCor="20"
-mathLbfgsNumCor="-5"
-minLbfgsNumCor="1"
-defaultOptimizer="lbfgs"
-
-########################################################
 #MAIN FUNCTION BEGINS HERE, FIRST FEW STEPS SETUP YOUR DRAG AND DROP VARIABLES I LEARNED THIS METHOD FROM GITHUB USER 0000sir, AND HIS VERY USEFUL 'LARGER-NEURAL-STYLE' -BIGBRUSH TILING SCRIPT.
 ########################################################
 
-main(){
-   # 1. input image
+  # 1. input image
     input=$1
     input_file=`basename $input`
     clean_name="${input_file%.*}"
@@ -106,19 +96,53 @@ main(){
     proj_dir=$output/$clean_name"."$style_name
 	mkdir -p $proj_dir
 
+
+
+
+
 ########################################################
-#THIS IS WHERE THE LOOP STARTS
+#MATH IS OPTIONAL YOU CAN ADD OR SUBTRACT THESE VALUES ON EVERY STEP, 
+#USE VALUES OF ZERO TO KEEP INITIAL CONSTANTS FROM ABOVE UNCHANGED
+########################################################
+#USE A + or - OPERATOR, SCRIPT IS EXPECTING EITHER - OR + IF YOU LEAVE IT OUT IT WILL BREAK LOGIC
+#YOU COULD CHOOSE TO ADD OR SUBTRACT INSTEAD LIKE mathStyleScale="+.015" OR mathStyleWeight="-50"
+
+mathStyleScale="-.00" 
+mathStyleWeight="+00"
+mathContentWeight="-0"
+mathIters="-110"
+
+########################################################
+#BACKEND SETTINGS
+########################################################
+backend="cudnn"
+gpu="0"
+
+#LEAVE THIS VAR BLANK TO SKIP MULTIGPU FUNCITONALITTY
+multiGpu=" "
+
+#UNCOMMENT THIS LINE TO ENABLE MULTIGPU FUNCTIONALITY
+#multiGpu="-gpu 1,0 -multigpu_strategy 8"
+
+#OPTIMIZER VALUES
+lbfgsNumCor="20"
+mathLbfgsNumCor="-0"
+minLbfgsNumCor="20"
+defaultOptimizer="lbfgs"
+
+########################################################
+#THIS IS WHERE THE REGULAR PROGRAM LOOP STARTS
 ########################################################
 for i in `seq 1 100`;
 do
+out_file="$proj_dir/${clean_name}.${style_name}.resolution.${r}.${startingSize}.$i.jpg"
 
 #GRAB PREVIOUS ITERATION VALUES TO DEFINIE CONTENT AND IMAGE_INIT
 DWN2=$((i-2))
 DWN=$((i-1))
 
-out_file="$proj_dir/${clean_name}.${style_name}.$i.jpg"
-out_file_prev="$proj_dir/${clean_name}.${style_name}.$DWN.jpg"
-out_file_prev2="$proj_dir/${clean_name}.${style_name}.$DWN.jpg"
+out_file_prev="$proj_dir/${clean_name}.${style_name}.resolution.${r}.${startingSize}.$DWN.jpg"
+out_file_prev2="$proj_dir/${clean_name}.${style_name}.resolution.${r}.${startingSize}.$DWN.jpg"
 
 #SERIES OF IF STATEMENTS BELOW WILL ADD CONDITIONALS TO THE LOOP STEP YOU ARE ON
 #######################################################
@@ -150,12 +174,9 @@ elif [ $i = 2 ]; then
 ########################################################
 #TEST FOR GREATER THAN FRAME 2
 #IMAGE WILL BE INITIALIZED ON PREVIOUS ITERATION
-#CONTENT IMAGE WILL BE SET ON PREVIOUS ITERATION
+#BUT THIS SETTING IS CONTENT IMAGE TO TWO PREVIOUS ITERATIONS AGO TO AVOID SOME NOISE
 elif [ $i -gt 2 ]; then
-	out_file_prev="$proj_dir/${clean_name}.${style_name}.$DWN.jpg"
-	out_file_prev2="$proj_dir/${clean_name}.${style_name}.$DWN.jpg"
-	#uncomment var below to set content image to two iterations ago.
-	#out_file_prev2="$proj_dir/${clean_name}.${style_name}.$DWN2.jpg"
+	out_file_prev2="$proj_dir/${clean_name}.${style_name}.resolution.${r}.${startingSize}.$DWN.jpg"
 	numIter=$((numIter$mathIters))
 	styleWeight=$((styleWeight$mathStyleWeight))
 	contentWeight=$((contentWeight$mathContentWeight))
@@ -188,7 +209,7 @@ else
 fi
 
 ########################################################
-#TEST FOR MAX ENDING SIZE TO DETERMINE IF YOU SHOULD STOP RUNNING THE LOOP
+#TEST SIZE BEFORE SWITCHING TO ADAM OPTIMIZER
 ########################################################
 if [ $imageSize -gt $endingSize ]; then
 	echo "you have already reached your max ending size of $endingSize px"
@@ -203,8 +224,8 @@ fi
 ########################################################
 #TEST FOR LBFGS NUMCOR RESET TO 1 WHEN APPLICABLE
 ########################################################
-if [ $lbfgsNumCor -lt $minLbfgsNumCor ]; then
-	lbfgsNumCor="$minLbfgsNumCor"
+if [ $lbfgsNumCor -lt 1 ]; then
+	lbfgsNumCor="1"
 else
 	echo "you have not activated lbfgsNumCor Value $lbfgsNumCor"
 fi
@@ -219,7 +240,7 @@ echo " "
 echo " "
 echo "Your starting size is $startingSize, Your ending size is $endingSize"
 echo "Your step expanse is $stepExpanse"
-echo "Your per pixel step is $addPixelsPerStep over the course of $numberOfSteps resolution changes"
+echo "Your per pixel step is $addPixelsPerStep over the course of $numberOfStepsLessOne resolution changes $numberOfSteps images total"
 echo "This is STEP #$i"
 echo " "
 echo " "
@@ -286,9 +307,11 @@ fi
 $CMDneural
 
 ########################################################
-#FINISHES THE LOOP
+#FINISHES THE LOOPS
 ########################################################
 done
+done
+
 ########################################################
 #FINISHES MAIN FUNCTION WRAP
 }
